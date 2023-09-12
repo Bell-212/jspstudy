@@ -40,7 +40,7 @@ public class JSONServlet extends HttpServlet {
 	  
 	  // 3. JSON 만들기
 	  // {"title": "공지사항", "writer": "관리자"}
-	  // **실무에선 '코드의 일반화'를 위해 서드파티 라이브러리를 사용하지 않고 자바로만 JSON파일을 만들기도 한다.
+	  // **실무에선 '코드의 일반화'를 위해 서드파티 라이브러리를 사용하지 않고 자바로만 JSON파일을 만들기도 한다.(\" 사용)
 	  JSONObject responseJSON = new JSONObject();
 	  responseJSON.put("title", title);
 	  responseJSON.put("writer", writer);
