@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Insert title here</title>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 </head>
 <body>
   <div>
@@ -10,7 +11,7 @@
       <div>
         <strong>아이디</strong>
       </div>
-      <input type="text" id="id" name="id" required><span>@naver.com</span>
+      <input type="text" id="id" name="id"><span>@naver.com</span>
       <p>
       <div>
         <strong>비밀번호</strong>
@@ -79,7 +80,19 @@
     </form>
   
   </div>
-  
+  <script>
+    var id = $('#id').val();
+    var pw = $('#pw').val();
+    var chkPw = $('#chkPw').val();
+    $('#frm_reg').submit(function(event){
+      if(id === ''){
+        alert('아이디는 필수입니다.');
+        event.preventDefault();
+        return;
+      }
+      $('#frm_reg').submit();
+    })
+  </script>
   
 </body>
 </html>
