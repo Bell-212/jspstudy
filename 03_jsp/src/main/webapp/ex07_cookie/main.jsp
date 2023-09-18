@@ -8,10 +8,22 @@
 <meta charset="UTF-8">
 <title>Insert title here</title>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-
 </head>
 <body>
 
+  <%
+    String rememberMe = "";  // 쿠키 rememberMe가 없으면 빈 문자열("")을 사용하기 위해서 초기화를 진행함
+    Cookie[] cookies = request.getCookies();
+    if(cookies != null){
+      for(int i = 0; i < cookies.length; i++){
+        if(cookies[i].getName().equals("rememberMe")){
+          rememberMe = cookies[i].getValue();
+          break;
+        }
+      }
+    }
+    pageContext.setAttribute("rememberMe", rememberMe);
+  %>
 
   <div>
     <form method="post" action="${contextPath}/rememberMe">
@@ -32,6 +44,12 @@
       </div>
     </form>
   </div>
+  <script>
+      if('${rememberMe}' !== ''){
+        $('#id').val('${rememberMe}');
+        $('#remember_me').prop('checked', true);
+      }
+  </script>
 
 
 
