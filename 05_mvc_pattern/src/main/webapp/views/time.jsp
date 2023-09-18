@@ -11,12 +11,7 @@
 </head>
 <body>
 
-<c:if test="${today != null}">
-  ${today}
-</c:if>
-<c:if test="${now != null}">
   ${now}
-</c:if>
 
 </body>
 </html>
