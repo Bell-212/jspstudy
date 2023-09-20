@@ -10,9 +10,9 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 </head>
 <body>
-  
+  환영합니다
   <div>
-    <a href="${contextPath}/article/writeArticle.do">기사등록 화면으로 가기</a>
+    <a href="${contextPath}/article/writeArticle.do">기사등록화면으로가기</a>
   </div>
 
 </body>

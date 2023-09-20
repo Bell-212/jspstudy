@@ -29,11 +29,6 @@
 </head>
 <body>
 
-  <div>
-    <a href="${contextPath}/board/write.do">작성하러가기</a>
-  </div>
-  
-  <hr>
   
   <div>
     <c:forEach items="${boardList}" var="board">

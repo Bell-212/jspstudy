@@ -51,15 +51,29 @@ public class BoardController extends HttpServlet {
 	  // 요청에 따른 처리
 	  switch(urlMapping) {
 	  // 단순 이동 (forward 처리)
-	  case "/board/list.do":
-	    af = new ActionForward("/board/list.jsp", false);
-	    break;
 	  case "/board/write.do":
 	    af = new ActionForward("/board/write.jsp", false);
 	    break;
+	  case "/index.do":
+	    af = new ActionForward("/index.jsp", false);
 	  // 서비스 처리
 	  case "/board/register.do":
 	    af = boardService.register(request);
+	    break;
+	  case "/board/list.do":
+	    af = boardService.getBoardList(request);
+	    break;
+	  case "/board/detail.do":
+	    af = boardService.getBoardByNo(request);
+	    break;
+	  case "/board/edit.do":
+	    af = boardService.edit(request);
+	    break;
+	  case "/board/modify.do":
+	    af = boardService.modify(request);
+	    break;
+	  case "/board/delete.do":
+	    af = boardService.delete(request);
 	    break;
 	  }
 	  

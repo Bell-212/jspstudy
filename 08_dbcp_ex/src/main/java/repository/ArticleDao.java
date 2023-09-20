@@ -11,9 +11,11 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
-import domain.BoardDto;
+import domain.ArticleDto;
 
-public class BoardDao {
+
+
+public class ArticleDao {
 
   // 모든 메소드가 공동으로 사용할 객체 선언
   private Connection con;
@@ -23,9 +25,9 @@ public class BoardDao {
   // Connection Pool 관리 DataSource 객체 선언
   private DataSource dataSource;
   
-  // Singleton Pattern으로 BoardDao 객체 생성
-  private static BoardDao dao = new BoardDao();
-  private BoardDao() {
+  // Singleton Pattern으로 ArticleDao 객체 생성
+  private static ArticleDao dao = new ArticleDao();
+  private ArticleDao() {
     // META-INF/context.xml에 있는 <Resource name="jdbc/oraclexe" /> 내용을 읽어서 DataSource 객체 생성하기
     try {
       Context context = new InitialContext();
@@ -35,7 +37,7 @@ public class BoardDao {
       e.printStackTrace();
     }
   }
-  public static BoardDao getDao() {
+  public static ArticleDao getDao() {
     return dao;
   }
   
@@ -51,7 +53,7 @@ public class BoardDao {
   }
   
   // 게시글 등록 메소드
-  public int register(BoardDto dto) {
+  public int addArticle(ArticleDto dto) {
     
     // 등록 결과 선언 (insert 실행 결과는 삽입된 행의 개수이다.)
     int insertResult = 0;
@@ -64,7 +66,7 @@ public class BoardDao {
       con = dataSource.getConnection();
       
       // 쿼리문 작성
-      String sql = "INSERT INTO BOARD_T(BOARD_NO, TITLE, CONTENT, MODIFIED_AT, CREATED_AT) VALUES (BOARD_SEQ.NEXTVAL, ?, ?, SYSDATE, SYSDATE)";
+      String sql = "INSERT INTO ARTICLE_T(ARTICLE_NO, TITLE, CONTENT, EDITOR, LASTMODIFIED, CREATED) VALUES (ARTICLE_SEQ.NEXTVAL, ?, ?, ?, SYSDATE, SYSDATE)";
       
       // ps 객체 생성 (쿼리문 실행을 담당하는 객체)
       ps = con.prepareStatement(sql);
@@ -72,6 +74,7 @@ public class BoardDao {
       // 쿼리문의 변수(?로 처리된 부분)에 값을 전달
       ps.setString(1, dto.getTitle());    // 1번째 물음표(?)에 dto.getTitle() 전달하기
       ps.setString(2, dto.getContent());  // 2번째 물음표(?)에 dto.getContent() 전달하기
+      ps.setString(3, dto.getEditor());
       
       // 쿼리문의 실행
       insertResult = ps.executeUpdate();
@@ -84,12 +87,10 @@ public class BoardDao {
     
     // 등록 결과 반환
     return insertResult;
-    
-    
   }
   
   // 게시글 개수 반환 메소드
-  public int getBoardCount() {
+  public int getArticleCount() {
     
     // 게시글 개수
     int count = 0;
@@ -97,7 +98,7 @@ public class BoardDao {
     try {
       
       con = dataSource.getConnection();
-      String sql = "SELECT COUNT(*) FROM BOARD_T";
+      String sql = "SELECT COUNT(*) FROM ARTICLE_T";
       
       ps = con.prepareStatement(sql);
       rs = ps.executeQuery();
@@ -117,30 +118,31 @@ public class BoardDao {
   }
   
   // 게시글 목록 반환 메소드
-  public List<BoardDto> getBoardList(Map<String, Object> map) {
+  public List<ArticleDto> getArticleList(Map<String, Object> map) {
     
     // 게시글 목록 저장 List
-    List<BoardDto> list = new ArrayList<BoardDto>();
+    List<ArticleDto> list = new ArrayList<ArticleDto>();
     
     try {
       
       con = dataSource.getConnection();
-      String sql = "SELECT A.BOARD_NO, A.TITLE, A.CONTENT, A.MODIFIED_AT, A.CREATED_AT"
-                 + "  FROM (SELECT ROW_NUMBER() OVER (ORDER BY BOARD_NO DESC) AS RN, BOARD_NO, TITLE, CONTENT, MODIFIED_AT, CREATED_AT"
-                 + "          FROM BOARD_T) A"
+      String sql = "SELECT A.ARTICLE_NO, A.TITLE, A.CONTENT, A.EDITOR, A.LASTMODIFIED, A.CREATED"
+                 + "  FROM (SELECT ROW_NUMBER() OVER (ORDER BY ARTICLE_NO DESC) AS RN, ARTICLE_NO, TITLE, CONTENT, EDITOR, LASTMODIFIED, CREATED"
+                 + "          FROM ARTICLE_T) A"
                  + " WHERE A.RN BETWEEN ? AND ?";
       ps = con.prepareStatement(sql);
       ps.setInt(1, (int)map.get("begin"));
       ps.setInt(2, (int)map.get("end"));
       rs = ps.executeQuery();
       while(rs.next()) {
-        // rs -> BoardDto
-        BoardDto dto = BoardDto.builder()
-                        .board_no(rs.getInt(1))
+        // rs -> ArticleDto
+        ArticleDto dto = ArticleDto.builder()
+                        .article_no(rs.getInt(1))
                         .title(rs.getString(2))
                         .content(rs.getString(3))
-                        .modified_at(rs.getDate(4))
-                        .created_at(rs.getDate(5))
+                        .editor(rs.getString(4))
+                        .lastModified(rs.getDate(5))
+                        .created(rs.getDate(6))
                         .build();
         // BoardDto -> list
         list.add(dto);
@@ -158,27 +160,28 @@ public class BoardDao {
   }
   
   // 게시글 반환 메소드
-  public BoardDto getBoardByNo(int board_no) {
+  public ArticleDto getArticleByNo(int article_no) {
     
     // 게시글
-    BoardDto dto = null;
+    ArticleDto dto = null;
     
     try {
       
       con = dataSource.getConnection();
-      String sql = "SELECT BOARD_NO, TITLE, CONTENT, MODIFIED_AT, CREATED_AT"
-                 + "  FROM BOARD_T"
-                 + " WHERE BOARD_NO = ?";
+      String sql = "SELECT ARTICLE_NO, TITLE, CONTENT, EDITOR, LASTMODIFIED, CREATED"
+                 + "  FROM ARTICLE_T"
+                 + " WHERE ARTICLE_NO = ?";
       ps = con.prepareStatement(sql);
-      ps.setInt(1, board_no);
+      ps.setInt(1, article_no);
       rs = ps.executeQuery();
       if(rs.next()) {
-        dto = BoardDto.builder()
-            .board_no(rs.getInt(1))
+        dto = ArticleDto.builder()
+            .article_no(rs.getInt(1))
             .title(rs.getString(2))
             .content(rs.getString(3))
-            .modified_at(rs.getDate(4))
-            .created_at(rs.getDate(5))
+            .editor(rs.getString(4))
+            .lastModified(rs.getDate(5))
+            .created(rs.getDate(6))
             .build();
       }
     } catch (Exception e) {
@@ -193,7 +196,7 @@ public class BoardDao {
   }
   
   // 게시글 수정 메소드
-  public int modify(BoardDto dto) {
+  public int modify(ArticleDto dto) {
     
     // 수정 결과
     int modifyResult = 0;
@@ -201,13 +204,13 @@ public class BoardDao {
     try {
       
       con = dataSource.getConnection();
-      String sql = "UPDATE BOARD_T"
-                 + "   SET TITLE = ?, CONTENT = ?, MODIFIED_AT = SYSDATE"
-                 + " WHERE BOARD_NO = ?";
+      String sql = "UPDATE ARTICLE_T"
+                 + "   SET TITLE = ?, CONTENT = ?, LASTMODIFIED = SYSDATE"
+                 + " WHERE ARTICLE_NO = ?";
       ps = con.prepareStatement(sql);
       ps.setString(1, dto.getTitle());
       ps.setString(2, dto.getContent());
-      ps.setInt(3, dto.getBoard_no());
+      ps.setInt(3, dto.getArticle_no());
       modifyResult = ps.executeUpdate();
       
     } catch (Exception e) {
@@ -222,7 +225,7 @@ public class BoardDao {
   
   
   // 게시글 삭제 메소드
-  public int delete(int board_no) {
+  public int delete(int article_no) {
     
     // 삭제 결과
     int deleteResult = 0;
@@ -230,9 +233,9 @@ public class BoardDao {
     try {
       
       con = dataSource.getConnection();
-      String sql = "DELETE FROM BOARD_T WHERE BOARD_NO = ?";
+      String sql = "DELETE FROM ARTICLE_T WHERE ARTICLE_NO = ?";
       ps = con.prepareStatement(sql);
-      ps.setInt(1, board_no);
+      ps.setInt(1, article_no);
       deleteResult = ps.executeUpdate();
       
     } catch (Exception e) {
