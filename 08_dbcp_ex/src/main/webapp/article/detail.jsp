@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<c:set var="contextPath" value="<%=request.getContextPath()%>"/>    
+<c:set var="contextPath" value="<%=request.getContextPath()%>" />
 <!DOCTYPE html>
 <html>
 <head>
@@ -13,45 +13,27 @@
     margin-right: 20px;
   }
 </style>
-<script>
-
-  $(function(){
-    fnDelete();
-  })
-
-  function fnDelete(){
-    $('#delete_link').click(function(event){
-      if(!confirm('게시글을 삭제할까요?')){
-        event.preventDefault();
-        return;
-      }
-    })
-  }
-
-</script>
 </head>
 <body>
 
   <div class="link">
-    <a href="${contextPath}/board/write.do">작성하러가기</a>
-    <a href="${contextPath}/board/list.do">목록으로이동</a>
-    <a href="${contextPath}/board/edit.do?board_no=${board.board_no}">수정하러가기</a>
-    <a id="delete_link" href="${contextPath}/board/delete.do?board_no=${board.board_no}">삭제하기</a>
+    <a href="${contextPath}/writeArticle.do">기사작성하러가기</a>
+    <a href="${contextPath}/getArticleList.do">기사목록으로이동</a>
+    <a href="${contextPath}/editArticle.do?article_no=${article.article_no}">기사편집하러가기</a>
   </div>
-  
+
   <hr>
   
   <div>
-    <div>게시글번호 ${board.board_no}</div>
-    <div>제목: ${board.title}</div>
-    <div><pre>${board.content}</pre></div>
-    <div>최종수정일: ${board.modified_at}</div>
-    <div>최초작성일: ${board.created_at}</div>
+    <div>기사번호: ${article.article_no}</div>
+    <div>기사제목: ${article.title}</div>
+    <div>작성자: ${article.editor}</div>
+    <div>조회수: ${article.hit}</div>
+    <div>기사내용</div>
+    <div><pre>${article.content}</pre></div>
+    <div>최종수정일: ${article.lastmodified}</div>
+    <div>최초작성일: ${article.created}</div>
   </div>
-  
-  <div>${paging}</div>
-  
-  
 
 </body>
 </html>

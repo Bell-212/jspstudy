@@ -11,20 +11,17 @@
 <script>
 
   $(function(){
-    // 함수 호출
-    fnArticleList();
-    fnArticleModify();
+    fnList();
+    fnAdd();
   })
 
-  // 함수 정의
-  function fnArticleList(){
+  function fnList(){
     $('#btn_list').click(function(){  
-      location.href = '${contextPath}/getArticleList.do';
+      location.href = '${contextPath}/book/list.do';
     })
   }
-  // 함수 정의
-  function fnArticleModify(){
-    $('#frm_edit').submit(function(event){
+  function fnAdd(){
+    $('#frm_add').submit(function(event){
       if($('#title').val() === ''){
         alert('제목은 필수입니다.');
         $('#title').focus();
@@ -39,17 +36,21 @@
 <body>
 
 <div>
-  <form id="frm_edit" method="post" action="${contextPath}/modifyArticle.do">
+  <form id="frm_add" method="post" action="${contextPath}/book/add.do">
     <div>
       <label for="title">제목</label>
-      <input type="text" id="title" name="title" value="${article.title}">
+      <input type="text" id="title" name="title">
     </div>
     <div>
-      <textarea rows="5" cols="50" name="content">${article.content}</textarea>
+      <label for="author">저자</label>
+      <input type="text" id="author" name="author">
     </div>
     <div>
-      <input type="hidden" name="article_no" value="${article.article_no}">
-      <button type="submit">수정완료</button>
+      <label for="price">가격</label>
+      <input type="text" id="price" name="price">
+    </div>
+    <div>
+      <button type="submit">작성완료</button>
       <button type="reset">작성초기화</button>
       <button type="button" id="btn_list">목록으로이동</button>
     </div>

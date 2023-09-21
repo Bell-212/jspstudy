@@ -11,9 +11,9 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
+import org.apache.catalina.realm.DataSourceRealm;
+
 import domain.ArticleDto;
-
-
 
 public class ArticleDao {
 
@@ -28,7 +28,7 @@ public class ArticleDao {
   // Singleton Pattern으로 ArticleDao 객체 생성
   private static ArticleDao dao = new ArticleDao();
   private ArticleDao() {
-    // META-INF/context.xml에 있는 <Resource name="jdbc/oraclexe" /> 내용을 읽어서 DataSource 객체 생성하기
+    // META-INF/context.xml에 있는 <Resource name="jdbc/oraclexe" /> 태그 내용을 읽어서 DataSource 객체 생성하기
     try {
       Context context = new InitialContext();
       Context env = (Context)context.lookup("java:comp/env");
@@ -52,31 +52,19 @@ public class ArticleDao {
     }
   }
   
-  // 게시글 등록 메소드
-  public int addArticle(ArticleDto dto) {
+  // 기사 등록 메소드
+  public int articleAdd(ArticleDto dto) {
     
-    // 등록 결과 선언 (insert 실행 결과는 삽입된 행의 개수이다.)
     int insertResult = 0;
     
     try {
-      
-      // Connection Pool에서 Connection을 하나 받아온다.
-      // Connection Pool 관리는 DataSource 객체가 수행한다.
-      
+            
       con = dataSource.getConnection();
-      
-      // 쿼리문 작성
-      String sql = "INSERT INTO ARTICLE_T(ARTICLE_NO, TITLE, CONTENT, EDITOR, LASTMODIFIED, CREATED) VALUES (ARTICLE_SEQ.NEXTVAL, ?, ?, ?, SYSDATE, SYSDATE)";
-      
-      // ps 객체 생성 (쿼리문 실행을 담당하는 객체)
+      String sql = "INSERT INTO ARTICLE_T(ARTICLE_NO, TITLE, CONTENT, EDITOR, HIT, LASTMODIFIED, CREATED) VALUES (ARTICLE_SEQ.NEXTVAL, ?, ?, ?, 0, SYSDATE, SYSDATE)";
       ps = con.prepareStatement(sql);
-      
-      // 쿼리문의 변수(?로 처리된 부분)에 값을 전달
-      ps.setString(1, dto.getTitle());    // 1번째 물음표(?)에 dto.getTitle() 전달하기
-      ps.setString(2, dto.getContent());  // 2번째 물음표(?)에 dto.getContent() 전달하기
+      ps.setString(1, dto.getTitle());
+      ps.setString(2, dto.getContent());
       ps.setString(3, dto.getEditor());
-      
-      // 쿼리문의 실행
       insertResult = ps.executeUpdate();
       
     } catch (Exception e) {
@@ -85,27 +73,26 @@ public class ArticleDao {
       close();
     }
     
-    // 등록 결과 반환
     return insertResult;
+    
   }
   
-  // 게시글 개수 반환 메소드
-  public int getArticleCount() {
+  // 기사 개수 반환 메소드
+  public int articleCount() {
     
-    // 게시글 개수
     int count = 0;
     
     try {
       
       con = dataSource.getConnection();
-      String sql = "SELECT COUNT(*) FROM ARTICLE_T";
-      
+      String sql = "SELECT COUNT(*) AS CNT FROM ARTICLE_T";  //    CNT
+                                                             //  -------
+                                                             //    120
       ps = con.prepareStatement(sql);
       rs = ps.executeQuery();
       if(rs.next()) {
-        count = rs.getInt(1);  // count = rs.getInt("COUNT(*)")도 가능함
+        count = rs.getInt(1);  // count = rs.getInt("CNT")도 가능함
       }
-      
       
     } catch (Exception e) {
       e.printStackTrace();
@@ -113,21 +100,20 @@ public class ArticleDao {
       close();
     }
     
-    // 게시글 개수 반환
     return count;
+    
   }
   
-  // 게시글 목록 반환 메소드
-  public List<ArticleDto> getArticleList(Map<String, Object> map) {
+  // 기사 목록 반환 메소드
+  public List<ArticleDto> articleList(Map<String, Object> map) {
     
-    // 게시글 목록 저장 List
     List<ArticleDto> list = new ArrayList<ArticleDto>();
     
     try {
       
       con = dataSource.getConnection();
-      String sql = "SELECT A.ARTICLE_NO, A.TITLE, A.CONTENT, A.EDITOR, A.LASTMODIFIED, A.CREATED"
-                 + "  FROM (SELECT ROW_NUMBER() OVER (ORDER BY ARTICLE_NO DESC) AS RN, ARTICLE_NO, TITLE, CONTENT, EDITOR, LASTMODIFIED, CREATED"
+      String sql = "SELECT A.ARTICLE_NO, A.TITLE, A.CONTENT, A.EDITOR, A.HIT, A.LASTMODIFIED, A.CREATED"
+                 + "  FROM (SELECT ROW_NUMBER() OVER (ORDER BY ARTICLE_NO DESC) AS RN, ARTICLE_NO, TITLE, CONTENT, EDITOR, HIT, LASTMODIFIED, CREATED"
                  + "          FROM ARTICLE_T) A"
                  + " WHERE A.RN BETWEEN ? AND ?";
       ps = con.prepareStatement(sql);
@@ -135,16 +121,15 @@ public class ArticleDao {
       ps.setInt(2, (int)map.get("end"));
       rs = ps.executeQuery();
       while(rs.next()) {
-        // rs -> ArticleDto
         ArticleDto dto = ArticleDto.builder()
-                        .article_no(rs.getInt(1))
-                        .title(rs.getString(2))
-                        .content(rs.getString(3))
-                        .editor(rs.getString(4))
-                        .lastModified(rs.getDate(5))
-                        .created(rs.getDate(6))
-                        .build();
-        // BoardDto -> list
+                          .article_no(rs.getInt(1))
+                          .title(rs.getString(2))
+                          .content(rs.getString(3))
+                          .editor(rs.getString(4))
+                          .hit(rs.getInt(5))
+                          .lastmodified(rs.getDate(6))
+                          .created(rs.getDate(7))
+                          .build();
         list.add(dto);
       }
       
@@ -154,21 +139,19 @@ public class ArticleDao {
       close();
     }
     
-    
-    // 게시글 목록 반환
     return list;
+    
   }
   
-  // 게시글 반환 메소드
-  public ArticleDto getArticleByNo(int article_no) {
+  // 기사 반환 메소드
+  public ArticleDto articleDetail(int article_no) {
     
-    // 게시글
     ArticleDto dto = null;
     
     try {
       
       con = dataSource.getConnection();
-      String sql = "SELECT ARTICLE_NO, TITLE, CONTENT, EDITOR, LASTMODIFIED, CREATED"
+      String sql = "SELECT ARTICLE_NO, TITLE, CONTENT, EDITOR, HIT, LASTMODIFIED, CREATED"
                  + "  FROM ARTICLE_T"
                  + " WHERE ARTICLE_NO = ?";
       ps = con.prepareStatement(sql);
@@ -176,29 +159,29 @@ public class ArticleDao {
       rs = ps.executeQuery();
       if(rs.next()) {
         dto = ArticleDto.builder()
-            .article_no(rs.getInt(1))
-            .title(rs.getString(2))
-            .content(rs.getString(3))
-            .editor(rs.getString(4))
-            .lastModified(rs.getDate(5))
-            .created(rs.getDate(6))
-            .build();
+                .article_no(rs.getInt(1))
+                .title(rs.getString(2))
+                .content(rs.getString(3))
+                .editor(rs.getString(4))
+                .hit(rs.getInt(5))
+                .lastmodified(rs.getDate(6))
+                .created(rs.getDate(7))
+                .build();
       }
+      
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
       close();
     }
     
-    // 게시글 반환
     return dto;
     
   }
   
-  // 게시글 수정 메소드
-  public int modify(ArticleDto dto) {
+  // 기사 수정 메소드
+  public int articleModify(ArticleDto dto) {
     
-    // 수정 결과
     int modifyResult = 0;
     
     try {
@@ -219,13 +202,34 @@ public class ArticleDao {
       close();
     }
     
-    // 수정 결과 반환
-    return modifyResult;
+    return modifyResult;  
   }
   
+  // 기사 조회수 증가 메소드
+  public int articlePlusHit(int article_no) {
+    
+    // 조회수 증가 결과
+    int plusHit = 0;
+    
+    try {
+      
+      con = dataSource.getConnection();
+      String sql = "UPDATE ARTICLE_T SET HIT = HIT + 1 WHERE ARTICLE_NO = ?";
+      ps = con.prepareStatement(sql);
+      ps.setInt(1, article_no);
+      plusHit = ps.executeUpdate();
+      
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      close();
+    }
+    // 결과 반환
+    return plusHit;
+  }
   
-  // 게시글 삭제 메소드
-  public int delete(int article_no) {
+  // 기사 삭제 메소드
+  public int articleDelete(String articles) {
     
     // 삭제 결과
     int deleteResult = 0;
@@ -233,9 +237,8 @@ public class ArticleDao {
     try {
       
       con = dataSource.getConnection();
-      String sql = "DELETE FROM ARTICLE_T WHERE ARTICLE_NO = ?";
+      String sql = "DELETE FROM ARTICLE_T WHERE ARTICLE_NO IN(" + articles + ")";
       ps = con.prepareStatement(sql);
-      ps.setInt(1, article_no);
       deleteResult = ps.executeUpdate();
       
     } catch (Exception e) {
@@ -244,8 +247,14 @@ public class ArticleDao {
       close();
     }
     
-    // 삭제 결과 반환
+    // 결과 반환
     return deleteResult;
+    
   }
+  
+  
+  
+  
+  
   
 }
